@@ -1,18 +1,22 @@
 package model
 
-import util.Writer
 import com.mongodb.casbah.Imports._
+import util.Writer
 
 case class Location(latitude: Double, longitude: Double)
 
-object Location{
+object Location {
 
-  implicit object ToMongo extends Writer[Location, MongoDBObject] {
+  object FromMongo {
+    def parse(location: MongoDBObject): Location = {
+      Location(location.getAs[Double]("longitude").get, location.getAs[Double]("latitude").get)
+    }
+  }
+
+  object ToMongo extends Writer[Location, MongoDBObject] {
     def apply(location: Location): MongoDBObject = {
-      MongoDBObject(
-        "longitude" -> location.longitude,
+      MongoDBObject("longitude" -> location.longitude,
         "latitude" -> location.latitude)
-
     }
   }
 }
