@@ -1,6 +1,6 @@
 package model
 
-import util.{Splitter, Reader}
+import util.{Parser, Reader}
 
 case class ArtistDTO(id: String, hash: String, trackId: String, name: String)
 

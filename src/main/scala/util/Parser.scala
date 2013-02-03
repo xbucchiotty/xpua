@@ -3,7 +3,7 @@ package util
 import io.Source._
 import java.io.File
 
-case class Splitter (fileName: String){
+case class Parser(fileName: String) {
 
   private val sep: String = "<SEP>"
   private val encoding: String = "UTF-8"

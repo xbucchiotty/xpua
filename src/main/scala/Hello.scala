@@ -19,7 +19,7 @@ object Hello {
   }
 
   private def loadLocations() {
-    util.Splitter("subset_artist_location.txt").parse {
+    util.Parser("subset_artist_location.txt").parse {
       location: LocationByArtistId =>
         locations += LocationByArtistId.ToMongo(location)
         println(locations.size)
@@ -27,7 +27,7 @@ object Hello {
   }
 
   private def loadArtists() {
-    util.Splitter("subset_unique_artists.txt").parse {
+    util.Parser("subset_unique_artists.txt").parse {
       artist: ArtistDTO =>
         println(artist)
     }
