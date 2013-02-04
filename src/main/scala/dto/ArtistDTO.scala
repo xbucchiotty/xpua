@@ -1,6 +1,6 @@
-package model
+package dto
 
-import util.{Parser, Reader}
+import util.Reader
 
 case class ArtistDTO(id: String, hash: String, trackId: String, name: String)
 

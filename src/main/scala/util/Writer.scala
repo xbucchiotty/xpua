@@ -1,3 +1,3 @@
 package util
 
-trait Writer[T, O] extends (T=>O)
+trait Writer[T, O] extends (T => O)

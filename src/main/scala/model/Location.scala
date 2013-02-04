@@ -13,7 +13,7 @@ object Location {
     }
   }
 
-  object ToMongo extends Writer[Location, MongoDBObject] {
+  implicit object ToMongo extends Writer[Location, MongoDBObject] {
     def apply(location: Location): MongoDBObject = {
       MongoDBObject("longitude" -> location.longitude,
         "latitude" -> location.latitude)
