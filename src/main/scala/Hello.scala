@@ -1,8 +1,5 @@
 import com.mongodb.casbah.Imports._
-import dto.{TrackDTO, LocationDTO, ArtistDTO}
-import dto.TrackDTO.toMongo
-import dto.LocationDTO.toMongo
-import model.Artist.ToMongo
+import dto._
 import model.Artist
 
 object Hello {
@@ -14,36 +11,50 @@ object Hello {
   lazy val temp_locations = dbTemporaire("location")
   lazy val temp_tracks = dbTemporaire("track")
   lazy val temp_artists = dbTemporaire("artist")
+  lazy val temp_year = dbTemporaire("year")
+  lazy val temp_tag = dbTemporaire("tag")
+  lazy val temp_term = dbTemporaire("term")
 
   def main(args: Array[String]) {
 
-    temp_locations.dropIndexes()
-    temp_locations.dropCollection()
-    temp_locations.drop()
+    cleanCollection(temp_tag)
+    loadTags()
 
-    temp_tracks.dropIndexes()
-    temp_tracks.dropCollection()
-    temp_tracks.drop()
+    cleanCollection(temp_term)
+    loadTerms()
 
-    temp_artists.dropIndexes()
-    temp_artists.dropCollection()
-    temp_artists.drop()
-
+    cleanCollection(temp_locations)
+    temp_locations.createIndex(MongoDBObject("artistName" -> 1))
     loadLocations()
+
+    cleanCollection(temp_year)
+    temp_year.createIndex(MongoDBObject("trackId" -> 1))
+    loadYears()
+
+    cleanCollection(temp_tracks)
+    temp_tracks.createIndex(MongoDBObject("artistName" -> 1))
     loadTracks()
+
+    cleanCollection(temp_artists)
 
     val startArtist = System.currentTimeMillis()
     loadArtists()
     println("Artists: %d en %s ms".format(temp_artists.size, (System.currentTimeMillis() - startArtist)))
 
-    println("Il reste %d locations et %d tracks".format(temp_locations.size, temp_tracks.size))
-
   }
+
 
   private def loadLocations() {
     util.Parser("subset_artist_location.txt").parse {
       location: LocationDTO =>
         temp_locations += location
+    }
+  }
+
+  private def loadYears() {
+    util.Parser("subset_tracks_per_year.txt").parse {
+      year: YearOfTrack =>
+        temp_year += year
     }
   }
 
@@ -54,6 +65,20 @@ object Hello {
     }
   }
 
+  private def loadTags() {
+    util.Parser("subset_unique_mbtags.txt").parse {
+      tag: Tag =>
+        temp_tag += tag
+    }
+  }
+
+  private def loadTerms() {
+    util.Parser("subset_unique_terms.txt").parse {
+      term: Term =>
+        temp_term += term
+    }
+  }
+
   private def loadArtists() {
     util.Parser("subset_unique_artists.txt").parse {
       artistDTO: ArtistDTO => {
@@ -61,27 +86,39 @@ object Hello {
 
         val artistDetailBuilder = MongoDBObject.newBuilder
 
-        if (locationFromTemp.isDefined) {
-          locationFromTemp.get.remove("artistName")
-          artistDetailBuilder += "location" -> locationFromTemp.get
-        }
+        locationFromTemp.map(location => {
+          location -= ("artistName")
+          artistDetailBuilder += "location" -> location
+        })
 
         val tracks = temp_tracks.find(TrackDTO.byArtistName(artistDTO.name))
           .foldLeft(MongoDBList.newBuilder)((tracksElement, track) => {
-          temp_tracks.remove(track)
-          track.remove("artistName")
+
+          track -= ("artistName")
+
+          track.getAs[String]("trackId").map(trackId => {
+            temp_year.findOne(YearOfTrack.byTrackId(trackId)).map(year => {
+              year -= ("trackId")
+              track ++ year
+            })
+          })
+
           tracksElement += track
           tracksElement
         })
 
+
         artistDetailBuilder += "tracks" -> tracks.result()
 
-        val artist = artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.hash, artistDTO.trackId, artistDTO.name)
-
-        temp_artists += artist
+        temp_artists += (artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.hash, artistDTO.trackId, artistDTO.name))
       }
-
     }
+  }
+
+  private def cleanCollection(collection: MongoCollection) {
+    collection.dropIndexes()
+    collection.dropCollection()
+    collection.drop()
   }
 
 }
