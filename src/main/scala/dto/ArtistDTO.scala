@@ -2,7 +2,7 @@ package dto
 
 import util.Reader
 
-case class ArtistDTO(id: String, hash: String, trackId: String, name: String)
+case class ArtistDTO(id: String, mbid: String, trackId: String, name: String)
 
 
 object ArtistDTO {

@@ -1,6 +1,6 @@
 import com.mongodb.casbah.Imports._
 import dto._
-import model.{ArtistSimilarities, Artist}
+import model._
 import scala.slick.driver.SQLiteDriver.simple._
 import slick.session.Database
 import Database.threadLocalSession
@@ -94,39 +94,63 @@ object Hello {
           artistDetailBuilder += "location" -> location
         })
 
-        val tracks = temp_tracks.find(TrackDTO.byArtistName(artistDTO.name))
-          .foldLeft(MongoDBList.newBuilder)((tracksElement, track) => {
+        val directory = "/Users/xbucchiotty/Downloads/xpua/AdditionalFiles/"
 
-          track -= ("artistName")
 
-          track.getAs[String]("trackId").map(trackId => {
-            temp_year.findOne(YearOfTrack.byTrackId(trackId)).map(year => {
-              year -= ("trackId")
-              track ++ year
-            })
+        Database.forURL("jdbc:sqlite://%s%s".format(directory, "subset_track_metadata.db"), driver = "org.sqlite.JDBC").withSession {
+
+          val songs: List[Song] = (for (song <- Songs if song.artistId === artistDTO.id) yield (song)).list()
+
+          val songList = songs.foldLeft(MongoDBList.newBuilder)((songs, song) => {
+
+            val songForMongo = Song.toMongo(song)
+            songForMongo -= "artistId"
+            songForMongo -= "artistMbid"
+            songForMongo -= "artistName"
+
+            songs += songForMongo
           })
 
-          tracksElement += track
-          tracksElement
-        })
-
-        artistDetailBuilder += "tracks" -> tracks.result()
-
-        val directory = "/Users/xbucchiotty/Downloads/xpua/AdditionalFiles/"
+          artistDetailBuilder += "songs" -> songList.result()
+        }
 
         Database.forURL("jdbc:sqlite://%s%s".format(directory, "subset_artist_similarity.db"), driver = "org.sqlite.JDBC").withSession {
 
           val similars: List[String] = (for (artist <- ArtistSimilarities if artist.target === artistDTO.id) yield (artist.similar)).list()
 
           val similarityList = similars.foldLeft(MongoDBList.newBuilder)((similarity, similar) => {
-            similarity += MongoDBObject("name" -> similar)
+            similarity += MongoDBObject("id" -> similar)
             similarity
           })
 
           artistDetailBuilder += "similars" -> similarityList.result()
+
+        }
+        Database.forURL("jdbc:sqlite://%s%s".format(directory, "subset_artist_term.db"), driver = "org.sqlite.JDBC").withSession {
+
+          val tags: List[String] = (for (tagByArtist <- TagsByArtist if tagByArtist.artistId === artistDTO.id) yield (tagByArtist.tag)).list()
+
+          val tagList = tags.foldLeft(MongoDBList.newBuilder)((tags, tag) => {
+            tags += MongoDBObject("mbtag" -> tag)
+            tags
+          })
+
+          artistDetailBuilder += "mbtags" -> tagList.result()
         }
 
-        temp_artists += (artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.hash, artistDTO.trackId, artistDTO.name))
+        Database.forURL("jdbc:sqlite://%s%s".format(directory, "subset_artist_term.db"), driver = "org.sqlite.JDBC").withSession {
+
+          val terms: List[String] = (for (termByArtist <- TermsByArtist if termByArtist.artistId === artistDTO.id) yield (termByArtist.term)).list()
+
+          val termList = terms.foldLeft(MongoDBList.newBuilder)((terms, term) => {
+            terms += MongoDBObject("term" -> term)
+            terms
+          })
+
+          artistDetailBuilder += "terms" -> termList.result()
+        }
+
+        temp_artists += (artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.mbid, artistDTO.trackId, artistDTO.name))
       }
     }
   }

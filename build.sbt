@@ -17,4 +17,6 @@ fork in run := true
 
 javaOptions in run += "-Xmx1G -XX:MaxPermSize=128m"
 
+seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
 
+libraryDependencies += "commons-lang" % "commons-lang" % "2.6"

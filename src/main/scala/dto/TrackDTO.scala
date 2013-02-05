@@ -3,7 +3,7 @@ package dto
 import util.Reader
 import com.mongodb.casbah.Imports._
 
-case class TrackDTO(trackId: String, unknown: String, artistName: String, title: String)
+case class TrackDTO(trackId: String, song: String, artistName: String, title: String)
 
 object TrackDTO {
 
@@ -16,7 +16,7 @@ object TrackDTO {
 
   implicit def toMongo(trackDTO: TrackDTO): DBObject = {
     MongoDBObject("trackId" -> trackDTO.trackId,
-      "unknown" -> trackDTO.unknown,
+      "song" -> trackDTO.song,
       "artistName" -> trackDTO.artistName,
       "title" -> trackDTO.title)
   }
