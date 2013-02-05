@@ -1,6 +1,9 @@
 import com.mongodb.casbah.Imports._
 import dto._
-import model.Artist
+import model.{ArtistSimilarities, Artist}
+import scala.slick.driver.SQLiteDriver.simple._
+import slick.session.Database
+import Database.threadLocalSession
 
 object Hello {
 
@@ -107,8 +110,21 @@ object Hello {
           tracksElement
         })
 
-
         artistDetailBuilder += "tracks" -> tracks.result()
+
+        val directory = "/Users/xbucchiotty/Downloads/xpua/AdditionalFiles/"
+
+        Database.forURL("jdbc:sqlite://%s%s".format(directory, "subset_artist_similarity.db"), driver = "org.sqlite.JDBC").withSession {
+
+          val similars: List[String] = (for (artist <- ArtistSimilarities if artist.target === artistDTO.id) yield (artist.similar)).list()
+
+          val similarityList = similars.foldLeft(MongoDBList.newBuilder)((similarity, similar) => {
+            similarity += MongoDBObject("name" -> similar)
+            similarity
+          })
+
+          artistDetailBuilder += "similars" -> similarityList.result()
+        }
 
         temp_artists += (artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.hash, artistDTO.trackId, artistDTO.name))
       }

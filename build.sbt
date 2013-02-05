@@ -11,3 +11,10 @@ libraryDependencies += "org.mongodb" %% "casbah" % "2.5.0"
 libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.7.2"
 
 libraryDependencies += "com.typesafe.slick" %% "slick" % "1.0.0-RC2"
+
+
+fork in run := true
+
+javaOptions in run += "-Xmx1G -XX:MaxPermSize=128m"
+
+

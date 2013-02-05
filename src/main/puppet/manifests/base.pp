@@ -40,14 +40,14 @@ package{'neo4j':
     ensure      => present,
 }
 
+service{'neo4j-service':
+    ensure      => running,
+    require     => Package['neo4j'],
+}
+
 service{'mongodb':
     ensure      => running,
     require     => Package['mongodb-10gen'],
-}
-
-service{'neo4j':
-    ensure      => running,
-    require     => Package['neo4j'],
 }
 
 package{'openjdk-6-jdk':

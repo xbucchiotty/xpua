@@ -2,7 +2,7 @@ package model
 
 import com.mongodb.casbah.Imports._
 
-case class Artist(id: String, hash: String, trackId: String, name: String)
+class Artist(val id: String, val hash: String, val trackId: String, val name: String)
 
 object Artist {
 
