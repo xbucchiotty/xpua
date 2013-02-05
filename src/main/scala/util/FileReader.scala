@@ -3,11 +3,11 @@ package util
 import io.Source._
 import java.io.File
 
-case class Parser(fileName: String) {
+case class FileReader(fileName: String) {
 
   private val sep: String = "<SEP>"
   private val encoding: String = "UTF-8"
-  private val additionalFiles: String = "/Users/xbucchiotty/Downloads/xpua/AdditionalFiles/"
+  private val additionalFiles: String = Configuration.additionalFiles
 
   def parse[T](func: (T => Unit))(implicit reader: Reader[T]) {
     val linesIterator = fromFile(new File(additionalFiles, fileName), encoding).getLines()

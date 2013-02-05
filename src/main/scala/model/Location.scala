@@ -1,7 +1,9 @@
 package model
 
 import com.mongodb.casbah.Imports._
-import util.Writer
+import util.{MongoCollections, CollectionCleaner, Writer}
+import dto.LocationDTO
+import com.mongodb.casbah.MongoCollection
 
 case class Location(latitude: Double, longitude: Double)
 
@@ -18,5 +20,27 @@ object Location {
       MongoDBObject("longitude" -> location.longitude,
         "latitude" -> location.latitude)
     }
+  }
+
+}
+
+case class Locations(db: MongoDB) {
+  def findByArtistName(artistName: String) = {
+    val locations = db(MongoCollections.locations)
+
+    locations.findOne(LocationDTO.byArtistName(artistName))
+  }
+
+  def load() {
+    val locations = db(MongoCollections.locations)
+
+    CollectionCleaner(locations).clean()
+    locations.createIndex(MongoDBObject("artistName" -> 1))
+
+    util.FileReader("subset_artist_location.txt").parse {
+      location: LocationDTO => locations += location
+    }
+
+    println("[OK] : locations (%s elements)".format(locations.size))
   }
 }

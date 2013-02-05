@@ -1,6 +1,6 @@
 package dto
 
-import util.{Writer, Reader}
+import util.{MongoCollections, CollectionCleaner, Writer, Reader}
 import com.mongodb.casbah.Imports._
 
 case class Term(value: String)
@@ -17,6 +17,20 @@ object Term {
     def apply(term: Term): DBObject = {
       MongoDBObject("term" -> term.value)
     }
+  }
+
+}
+
+case class Terms(db: MongoDB) {
+
+  private lazy val terms = db(MongoCollections.terms)
+
+  def load() {
+    CollectionCleaner(terms).clean()
+    util.FileReader("subset_unique_terms.txt").parse {
+      term: Term => terms += term
+    }
+    println("[OK] : terms (%s elements)".format(terms.size))
   }
 
 }

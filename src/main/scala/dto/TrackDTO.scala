@@ -1,6 +1,6 @@
 package dto
 
-import util.Reader
+import util.{MongoCollections, CollectionCleaner, Reader}
 import com.mongodb.casbah.Imports._
 
 case class TrackDTO(trackId: String, song: String, artistName: String, title: String)
@@ -26,4 +26,19 @@ object TrackDTO {
   }
 
 
+}
+
+case class Tracks(db: MongoDB) {
+
+  private lazy val tracks = db(MongoCollections.tracks)
+
+  def load() {
+    CollectionCleaner(tracks).clean()
+    tracks.createIndex(MongoDBObject("artistName" -> 1))
+    util.FileReader("subset_unique_tracks.txt").parse {
+      trackDTO: TrackDTO =>
+        tracks += trackDTO
+    }
+    println("[OK] : tracks (%s elements)".format(tracks.size))
+  }
 }
