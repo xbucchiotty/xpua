@@ -14,7 +14,7 @@ object Artist {
 
 
   implicit def toMongo(artist: Artist): DBObject = {
-    MongoDBObject("id" -> artist.id,
+    MongoDBObject("artistId" -> artist.id,
       "mbid" -> artist.mbid,
       "trackId" -> artist.trackId,
       "name" -> artist.name)
@@ -58,7 +58,7 @@ case class Artists(db: MongoDB, locations: Locations) {
         DatabaseReader("subset_artist_similarity.db").database.withSession {
           val similars: List[String] = (for (artist <- ArtistSimilarities if artist.target === artistDTO.id) yield (artist.similar)).list()
           val similarityList = similars.foldLeft(MongoDBList.newBuilder)((similarity, similar) => {
-            similarity += MongoDBObject("id" -> similar)
+            similarity += MongoDBObject("artistId" -> similar)
             similarity
           })
 
