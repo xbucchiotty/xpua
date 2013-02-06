@@ -1,4 +1,4 @@
-package model
+package base
 
 import scala.slick.driver.SQLiteDriver.simple._
 import com.mongodb.casbah.Imports._

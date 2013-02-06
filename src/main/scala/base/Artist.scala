@@ -1,11 +1,10 @@
-package model
+package base
 
 import com.mongodb.casbah.Imports._
-import dto.ArtistDTO
+import file.{Locations, ArtistDTO}
 import scala.slick.driver.SQLiteDriver.simple._
-import slick.session.Database
 import Database.threadLocalSession
-import util.{DatabaseReader, MongoCollections, CollectionCleaner}
+import util.{DatabaseReader, MongoCollections}
 
 
 class Artist(val id: String, val mbid: String, val trackId: String, val name: String)
@@ -22,16 +21,15 @@ object Artist {
 }
 
 
-case class Artists(db: MongoDB, locations: Locations) {
+case class Artists(db: MongoDB) {
 
   private lazy val artists = db(MongoCollections.artists)
 
   def load() {
-    CollectionCleaner(artists).clean()
 
     util.FileReader("subset_unique_artists.txt").parse {
       artistDTO: ArtistDTO => {
-        val locationFromTemp = locations.findByArtistName(artistDTO.name)
+        val locationFromTemp = Locations(db).findByArtistName(artistDTO.name)
 
         val artistDetailBuilder = MongoDBObject.newBuilder
 

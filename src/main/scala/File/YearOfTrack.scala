@@ -1,7 +1,8 @@
-package dto
+package file
 
-import util.{MongoCollections, CollectionCleaner, Reader}
+import util.Reader
 import com.mongodb.casbah.Imports._
+
 
 case class YearOfTrack(year: Int, trackId: String)
 
@@ -26,16 +27,5 @@ object YearOfTrack {
 
 }
 
-case class Years(db: MongoDB) {
 
-  private lazy val years = db(MongoCollections.years)
 
-  def load() {
-    CollectionCleaner(years).clean()
-    years.createIndex(MongoDBObject("trackId" -> 1))
-    util.FileReader("subset_tracks_per_year.txt").parse {
-      year: YearOfTrack => years += year
-    }
-    println("[OK] : years (%s elements)".format(years.size))
-  }
-}

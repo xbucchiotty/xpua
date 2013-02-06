@@ -1,7 +1,6 @@
 package util
 
 object MongoCollections {
-
   val tags = "tags"
   val terms = "terms"
   val locations = "locations"

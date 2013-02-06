@@ -1,8 +1,10 @@
-package dto
+package file
 
-import util.Reader
-import com.mongodb.casbah.commons.MongoDBObject
+import _root_.util.{FileReader, MongoCollections, Reader}
 import com.mongodb.casbah.Imports._
+import akka.util.Timeout
+import akka.actor.MongoLoaderActor
+
 
 case class LocationDTO(locationId: String, artistName: String, latitude: Double, longitude: Double)
 
@@ -24,4 +26,12 @@ object LocationDTO {
   def byArtistName(artistName: String): MongoDBObject = {
     MongoDBObject("artistName" -> artistName)
   }
+
 }
+
+case class Locations(db: MongoDB) {
+  def findByArtistName(artistName: String) = {
+    db(MongoCollections.locations).findOne(LocationDTO.byArtistName(artistName))
+  }
+}
+
