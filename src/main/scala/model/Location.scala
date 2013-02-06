@@ -35,6 +35,8 @@ case class Locations(db: MongoDB) {
     val locations = db(MongoCollections.locations)
 
     CollectionCleaner(locations).clean()
+    locations.createIndex(MongoDBObject("loc" -> "2d"))
+
     locations.createIndex(MongoDBObject("artistName" -> 1))
 
     util.FileReader("subset_artist_location.txt").parse {

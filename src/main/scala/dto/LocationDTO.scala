@@ -15,10 +15,13 @@ object LocationDTO {
   }
 
   implicit def toMongo(location: LocationDTO): DBObject = {
+    val loc = MongoDBObject("longitude" -> location.longitude,
+      "latitude" -> location.latitude)
+
     MongoDBObject("locationId" -> location.locationId,
       "artistName" -> location.artistName,
-      "longitude" -> location.longitude,
-      "latitude" -> location.latitude)
+      "loc" -> loc
+    )
   }
 
   def byArtistName(artistName: String): MongoDBObject = {
