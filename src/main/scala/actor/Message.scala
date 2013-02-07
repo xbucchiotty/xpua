@@ -13,5 +13,7 @@ case class Clean(name: String) extends Message
 
 object Cleaned extends Message
 
+object Go extends Message
+
 case class ProcessInfo(db: MongoDB, fileName: String, collection: MongoCollection, toMongo: (Array[String] => MongoDBObject))
 

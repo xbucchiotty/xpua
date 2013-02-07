@@ -2,7 +2,7 @@ package util
 
 import akka.actor.Actor
 import com.mongodb.casbah.MongoDB
-import actor.{Cleaned, Clean, Write}
+import actor.{Cleaned, Clean}
 
 case class CollectionCleanerActor(db: MongoDB) extends Actor {
 
