@@ -11,12 +11,14 @@ class MongoLoaderActor extends Actor {
 
   def receive = {
     case Load(info) => {
-      println("Start loading %s".format(info))
+      println("[LOAD] : start %s".format(info.collection.name()))
       load(info)
+      println("[LOAD] : end %s".format(info.collection.name()))
     }
     case Write(info) => {
+      println("[WRITE] : start %s".format(info.collection.name()))
       write(info)
-      println("Finish load %s".format(info))
+      println("[WRITE]***end %s".format(info.collection.name()))
     }
   }
 
@@ -25,12 +27,10 @@ class MongoLoaderActor extends Actor {
     import context.dispatcher
 
     val response = context.actorFor("../collectionCleaner") ? Clean(info.collection.name())
-    response.mapTo[Message]
-      .onSuccess {
+    response.mapTo[Message].onSuccess {
       case Cleaned => self ! Write(info)
     }
   }
-
 
   def write(process: ProcessInfo) {
     val beansForMongo = FileReader(process.fileName) parseAndApply process.toMongo

@@ -4,11 +4,11 @@ import akka.actor.Actor
 import com.mongodb.casbah.MongoDB
 import actor.{Cleaned, Clean, Write}
 
-case class CollectionCleaner(db: MongoDB) extends Actor {
+case class CollectionCleanerActor(db: MongoDB) extends Actor {
 
   def receive = {
     case Clean(collectionName) => {
-      println("Start clearing %s".format(collectionName))
+      println("[CLEAN] : start %s".format(collectionName))
 
       val collection = db(collectionName)
       collection.dropIndexes()
@@ -16,7 +16,7 @@ case class CollectionCleaner(db: MongoDB) extends Actor {
       collection.drop()
       sender ! Cleaned
 
-      println("End clearing %s".format(collectionName))
+      println("[CLEAN] : end %s".format(collectionName))
     }
   }
 
