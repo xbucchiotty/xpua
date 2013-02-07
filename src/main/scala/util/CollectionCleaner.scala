@@ -2,20 +2,23 @@ package util
 
 import akka.actor.Actor
 import com.mongodb.casbah.MongoDB
-import actor.{Clean, Write}
+import actor.{Cleaned, Clean, Write}
 
 case class CollectionCleaner(db: MongoDB) extends Actor {
 
   def receive = {
-    case Clean(coll) => clean(coll)
-    sender ! Write
+    case Clean(collectionName) => {
+      println("Start clearing %s".format(collectionName))
+
+      val collection = db(collectionName)
+      collection.dropIndexes()
+      collection.dropCollection()
+      collection.drop()
+      sender ! Cleaned
+
+      println("End clearing %s".format(collectionName))
+    }
   }
 
-  def clean(collectionName: String) {
-    val collection = db(collectionName)
-    collection.dropIndexes()
-    collection.dropCollection()
-    collection.drop()
-  }
 }
 

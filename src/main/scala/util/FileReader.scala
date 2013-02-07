@@ -9,15 +9,20 @@ case class FileReader(fileName: String) {
   private val encoding: String = "UTF-8"
   private val additionalFiles: String = Configuration.additionalFiles
 
-  def parse[T](func: (T => Unit))(implicit reader: Reader[T]) {
+  def parseAndApply[T](reader: (Array[String] => T)): List[T] = {
     val linesIterator = fromFile(new File(additionalFiles, fileName), encoding).getLines()
 
-    while (linesIterator.hasNext) {
-      val nextLine = linesIterator.next()
-      val obj = reader.read(nextLine.split(sep))
-
-      func.apply(obj)
+    def transform(it: Iterator[String]): List[T] = {
+      if (it.hasNext) {
+        reader.apply(linesIterator.next().split(sep)) :: transform(it)
+      }
+      else {
+        Nil
+      }
     }
+    transform(linesIterator)
+
   }
+
 }
 

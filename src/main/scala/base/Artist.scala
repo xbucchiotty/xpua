@@ -23,11 +23,11 @@ object Artist {
 
 case class Artists(db: MongoDB) {
 
-  private lazy val artists = db(MongoCollections.artists)
+  private lazy val artists = db(MongoCollections.artists.name())
 
   def load() {
 
-    util.FileReader("subset_unique_artists.txt").parse {
+    /*util.FileReader("subset_unique_artists.txt").parseAndApply {
       artistDTO: ArtistDTO => {
         val locationFromTemp = Locations(db).findByArtistName(artistDTO.name)
 
@@ -86,6 +86,6 @@ case class Artists(db: MongoDB) {
         artists += (artistDetailBuilder.result() ++ new Artist(artistDTO.id, artistDTO.mbid, artistDTO.trackId, artistDTO.name))
       }
     }
-    println("[OK] : artists (%s elements)".format(artists.size))
+    println("[OK] : artists (%s elements)".format(artists.size))*/
   }
 }

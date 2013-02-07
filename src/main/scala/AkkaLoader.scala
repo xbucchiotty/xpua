@@ -1,12 +1,7 @@
-import actor._
-import actor.LocationsLoaderActor
-import actor.TagsLoaderActor
-import actor.TermsLoaderActor
-import actor.YearLoaderActor
+import actor.{ProcessInfo, Load, MongoLoaderActor}
 import akka.actor._
 import com.mongodb.casbah.Imports._
-import util.CollectionCleaner
-import util.Configuration
+import util.{MongoCollections, CollectionCleaner, Configuration}
 
 
 object AkkaLoader extends App {
@@ -15,23 +10,22 @@ object AkkaLoader extends App {
 
   val system = ActorSystem("LoadingSystem")
   val collectionCleanActor = system.actorOf(Props(new CollectionCleaner(db)), name = "collectionCleaner")
-  val tagsActor = system.actorOf(Props(new TagsLoaderActor(db)), name = "tags")
-  val termsActor = system.actorOf(Props(new TermsLoaderActor(db)), name = "termes")
-  val yearsActor = system.actorOf(Props(new YearLoaderActor(db)), name = "years")
-  val locationsActor = system.actorOf(Props(new LocationsLoaderActor(db)), name = "locations")
-  val tracksActor = system.actorOf(Props(new TracksLoaderActor(db)), name = "tracks")
+  val loader = system.actorOf(Props[MongoLoaderActor], name = "mongoLoader")
 
-  while (true) {
-    Thread.sleep(30000)
-    println("GO")
+  val loadTags = ProcessInfo(
+  db,
+  "subset_unique_mbtags.txt",
+  MongoCollections.tags, {
+    source: Array[String] => MongoDBObject("tag" -> source(0))
+  })
 
-    tagsActor ! Load
-    termsActor ! Load
-    yearsActor ! Load
-    locationsActor ! Load
-    tracksActor ! Load
+  loader ! Load(loadTags)
 
-  }
+  /*tagsActor ! Load
+  termsActor ! Load
+  yearsActor ! Load
+  locationsActor ! Load
+  tracksActor ! Load*/
 
 
 }
