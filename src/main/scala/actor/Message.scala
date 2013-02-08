@@ -5,15 +5,18 @@ import com.mongodb.casbah.Imports._
 
 sealed trait Message
 
-case class Load(info: ProcessInfo) extends Message
+case class Load(fileName: String) extends Message
 
-case class Write(info: ProcessInfo) extends Message
+case class Loaded(objects: Traversable[Array[String]]) extends Message
 
-case class Clean(name: String) extends Message
+case class Transform(objects: Traversable[Array[String]], f: (Array[String] => MongoDBObject)) extends Message
+
+case class Transformed(objects: Traversable[MongoDBObject]) extends Message
+
+case class Write(objects: Traversable[MongoDBObject], db: MongoDB, collection: MongoCollection) extends Message
+
+case class Clean(db: MongoDB, collection: MongoCollection) extends Message
 
 object Cleaned extends Message
 
-object Go extends Message
-
-case class ProcessInfo(db: MongoDB, fileName: String, collection: MongoCollection, toMongo: (Array[String] => MongoDBObject))
-
+case class Go(fileName: String, f: (Array[String] => MongoDBObject), db: MongoDB, collection: MongoCollection) extends Message

@@ -4,19 +4,19 @@ import akka.actor.Actor
 import com.mongodb.casbah.MongoDB
 import actor.{Cleaned, Clean}
 
-case class CollectionCleanerActor(db: MongoDB) extends Actor {
+class CollectionCleanerActor extends Actor {
 
   def receive = {
-    case Clean(collectionName) => {
-      println("[CLEAN] : start %s".format(collectionName))
+    case Clean(db, collection) => {
+      println("[CLEAN] : start %s".format(collection.name()))
 
-      val collection = db(collectionName)
-      collection.dropIndexes()
-      collection.dropCollection()
-      collection.drop()
+      val mongoCollection = db(collection.name())
+      mongoCollection.dropIndexes()
+      mongoCollection.dropCollection()
+      mongoCollection.drop()
       sender ! Cleaned
 
-      println("[CLEAN] : end %s".format(collectionName))
+      println("[CLEAN] : end %s".format(collection.name()))
     }
   }
 
