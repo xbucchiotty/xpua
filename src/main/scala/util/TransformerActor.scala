@@ -9,7 +9,6 @@ class TransformerActor extends Actor with akka.actor.ActorLogging{
   def receive = {
     case Transform(objects, f) => {
       println("[TRANSFORM] : start")
-      println("sender %s".format(sender))
       sender ! Transformed(transform(objects, f))
       println("[TRANSFORM] : end")
     }

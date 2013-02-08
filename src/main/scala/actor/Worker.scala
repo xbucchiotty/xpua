@@ -2,9 +2,10 @@ package actor
 
 import akka.actor.{Props, OneForOneStrategy, Actor}
 import akka.actor.SupervisorStrategy.Restart
-import akka.pattern.{ask, pipe}
+import akka.pattern.ask
 import util.{TransformerActor, FileReaderActor, CollectionCleanerActor}
 import akka.util.Timeout
+import akka.routing.{SmallestMailboxRouter, RoundRobinRouter}
 
 class Worker extends Actor with akka.actor.ActorLogging {
 
@@ -17,33 +18,30 @@ class Worker extends Actor with akka.actor.ActorLogging {
   }
 
   val fileReader = context.actorOf(Props[FileReaderActor], name = "fileReader")
-  val fileTransformer = context.actorOf(Props[TransformerActor], name = "fileTransformer")
+  val fileTransformer = context.actorOf(Props[TransformerActor].withRouter(RoundRobinRouter(nrOfInstances = 5)), name = "fileTransformer")
   val collectionCleaner = context.actorOf(Props[CollectionCleanerActor], name = "collectionCleaner")
-  val loader = context.actorOf(Props[MongoWriterActor], name = "mongoLoader")
+  val loader = context.actorOf(Props[MongoWriterActor].withRouter((SmallestMailboxRouter(nrOfInstances = 2))), name = "mongoLoader")
 
 
   def receive = {
     case Go(fileName, f, db, collection) => {
 
-      val transformationResult = ask(fileReader, Load(fileName))
-        .mapTo[Message]
-        .map(message => message match {
-        case Loaded(obj) => Transform(obj, f)
-      }).pipeTo(fileTransformer)(sender = self)
-        .mapTo[Transformed]
+      val transformResponse = ask(fileReader, Load(fileName))
+        .mapTo[Loaded]
+        .flatMap {
+        case Loaded(objs) => ask(fileTransformer, Transform(objs, f))
+      }.mapTo[Transformed]
 
       val collectionCleaningStatus = ask(collectionCleaner, Clean(db, collection)).mapTo[Message]
 
-      val writeOrder = for {o <- transformationResult
-                            c <- collectionCleaningStatus if c == Cleaned}
-      yield (Write(o.objects, db, collection))
+      for {o <- transformResponse
+           c <- collectionCleaningStatus if c == Cleaned
+           w <- ask(loader, Write(o.objects, db, collection))}
+      yield w
 
-      loader ! writeOrder
-    }
-    case message: Message => {
-      println(message)
-    }
 
+    }
+    case message => println(message)
 
   }
 
