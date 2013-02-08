@@ -17,7 +17,7 @@ object AkkaLoader extends App {
     source: Array[String] => MongoDBObject("tag" -> source(0))
   }, db, MongoCollections.tags)
 
-  worker ! Go("subset_unique_terms.txt", {
+ /* worker ! Go("subset_unique_terms.txt", {
     source: Array[String] => MongoDBObject("term" -> source(0))
   }, db, MongoCollections.terms)
 
@@ -39,5 +39,5 @@ object AkkaLoader extends App {
       "song" -> source(1),
       "artistName" -> source(2),
       "title" -> (if (source.size > 3) source(3) else ""))
-  }, db, MongoCollections.tracks)
+  }, db, MongoCollections.tracks)   */
 }

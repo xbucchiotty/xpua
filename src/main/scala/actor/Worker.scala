@@ -2,11 +2,11 @@ package actor
 
 import akka.actor.{Props, OneForOneStrategy, Actor}
 import akka.actor.SupervisorStrategy.Restart
-import akka.pattern.ask
+import akka.pattern.{ask, pipe}
 import util.{TransformerActor, FileReaderActor, CollectionCleanerActor}
 import akka.util.Timeout
 
-class Worker extends Actor {
+class Worker extends Actor with akka.actor.ActorLogging {
 
   import context.dispatcher
 
@@ -24,27 +24,27 @@ class Worker extends Actor {
 
   def receive = {
     case Go(fileName, f, db, collection) => {
-      ask(fileReader, Load(fileName)) map (readResponse => {
-        readResponse match {
-          case Loaded(objects) => {
-            ask(fileTransformer, Transform(objects, f)) map (transformResponse => {
-              transformResponse match {
-                case Transformed(objectsForMongo) => {
-                  ask(collectionCleaner, Clean(db, collection)) map (cleanResponse => {
-                    cleanResponse match {
-                      case Cleaned => {
-                        loader ! Write(objectsForMongo, db, collection)
-                      }
-                    }
-                  })
-                }
-              }
-            })
 
-          }
-        }
-      })
+      val transformationResult = ask(fileReader, Load(fileName))
+        .mapTo[Message]
+        .map(message => message match {
+        case Loaded(obj) => Transform(obj, f)
+      }).pipeTo(fileTransformer)(sender = self)
+        .mapTo[Transformed]
+
+      val collectionCleaningStatus = ask(collectionCleaner, Clean(db, collection)).mapTo[Message]
+
+      val writeOrder = for {o <- transformationResult
+                            c <- collectionCleaningStatus if c == Cleaned}
+      yield (Write(o.objects, db, collection))
+
+      loader ! writeOrder
     }
+    case message: Message => {
+      println(message)
+    }
+
+
   }
 
 

@@ -11,9 +11,9 @@ case class Loaded(objects: Traversable[Array[String]]) extends Message
 
 case class Transform(objects: Traversable[Array[String]], f: (Array[String] => MongoDBObject)) extends Message
 
-case class Transformed(objects: Traversable[MongoDBObject]) extends Message
+case class Transformed(objects: List[MongoDBObject]) extends Message
 
-case class Write(objects: Traversable[MongoDBObject], db: MongoDB, collection: MongoCollection) extends Message
+case class Write(objects: List[MongoDBObject], db: MongoDB, collection: MongoCollection) extends Message
 
 case class Clean(db: MongoDB, collection: MongoCollection) extends Message
 
