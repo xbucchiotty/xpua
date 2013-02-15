@@ -11,8 +11,9 @@ class MongoWriterActor extends Actor {
       println("[WRITE] : start %s".format(collection.name()))
       write(objects, db, collection)
       println("[WRITE]***end %s".format(collection.name()))
+
+      sender ! Done
     }
-    case x => println("Woops %s".format(x))
   }
 
   def write[T](objects: List[MongoDBObject], db: MongoDB, collection: MongoCollection) {

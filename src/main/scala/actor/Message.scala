@@ -19,4 +19,6 @@ case class Clean(db: MongoDB, collection: MongoCollection) extends Message
 
 object Cleaned extends Message
 
+object Done extends Message
+
 case class Go(fileName: String, f: (Array[String] => MongoDBObject), db: MongoDB, collection: MongoCollection) extends Message
