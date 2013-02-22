@@ -1,4 +1,4 @@
-package util
+package actor
 
 import akka.actor.Actor
 import com.mongodb.casbah.MongoDB

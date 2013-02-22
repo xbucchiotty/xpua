@@ -1,9 +1,9 @@
-package util
+package actor
 
 import io.Source._
 import java.io.File
 import akka.actor.Actor
-import actor.{Loaded, Load}
+import util.Configuration
 
 class FileReaderActor extends Actor {
 
@@ -19,15 +19,13 @@ class FileReaderActor extends Actor {
     }
   }
 
-  def parse(fileName: String): Traversable[Array[String]] = {
+  def parse(fileName: String): List[Array[String]] = {
     val linesIterator = fromFile(new File(additionalFiles, fileName), encoding).getLines()
 
-    var temp = Vector.empty[Array[String]]
-
-    while (linesIterator.hasNext) {
-      temp = temp :+ linesIterator.next().split(sep)
-    }
-    temp
+    {
+      for (line <- linesIterator)
+      yield (linesIterator.next().split(sep))
+    }.toList
   }
 
 }
