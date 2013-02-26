@@ -12,9 +12,9 @@ class FileReaderActor extends Actor {
   private val additionalFiles: String = Configuration.additionalFiles
 
   def receive = {
-    case Load(fileName) => {
+    case LoadFile(fileName) => {
       println("[READ] : start %s".format(fileName))
-      sender ! Loaded(parse(fileName))
+      sender ! FileLoaded(parse(fileName))
       println("[READ] : end %s".format(fileName))
     }
   }
