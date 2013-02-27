@@ -7,13 +7,11 @@ class TransformerActor extends Actor with akka.actor.ActorLogging {
 
   def receive = {
     case Transform(objects, f) => {
-      println("[TRANSFORM] : start")
       sender ! Transformed(transform(objects, f))
-      println("[TRANSFORM] : end")
     }
   }
 
-  def transform(objects: List[Array[String]], f: (Array[String] => MongoDBObject)): List[MongoDBObject] = {
+  def transform[T](objects: List[Array[String]], f: (Array[String] => T)): List[T] = {
     objects.map(x => f.apply(x)).toList
   }
 

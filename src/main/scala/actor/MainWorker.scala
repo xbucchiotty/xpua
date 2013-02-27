@@ -1,8 +1,6 @@
 package actor
 
 import akka.actor.Actor
-import akka.actor.SupervisorStrategy.Restart
-import akka.actor.OneForOneStrategy
 import akka.pattern.ask
 import akka.util.Timeout
 
@@ -14,13 +12,12 @@ import util.{MongoCollections, Configuration}
 
 class MainWorker extends Actor {
 
-  private var startTime: Long = 0L
-
   implicit val timeout = Timeout(10000)
 
   import context.dispatcher
 
   private val fileWorker = context.actorFor("akka://LoadingSystem/user/fileWorker")
+  private val actorLoader = context.actorFor("akka://LoadingSystem/user/actorLoader")
 
   def receive = {
     case Go => {
@@ -28,9 +25,7 @@ class MainWorker extends Actor {
       yield (ask(fileWorker, fileToBeLoad).mapTo[Message])
 
       Future.sequence(futureFilesResponses).onSuccess {
-        case list if list.forall(_ == Done) => {
-
-        }
+        case list if list.forall(_ == Done) => actorLoader ! Go
       }
     }
   }

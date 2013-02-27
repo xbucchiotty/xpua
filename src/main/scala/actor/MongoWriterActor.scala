@@ -8,10 +8,7 @@ class MongoWriterActor extends Actor {
 
   def receive = {
     case Write(objects, db, collection) => {
-      println("[WRITE] : start %s".format(collection.name()))
       write(objects, db, collection)
-      println("[WRITE]***end %s".format(collection.name()))
-
       sender ! Done
     }
   }
