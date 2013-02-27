@@ -9,10 +9,10 @@ import base._
 import concurrent.Future
 import scala.slick.driver.SQLiteDriver.simple._
 import com.mongodb.casbah.Imports
-import file.ArtistDTO
+import file.{Locations, ArtistDTO}
 
 
-class ActorLoader extends Actor {
+class ArtistLoader extends Actor {
 
   implicit val timeout = Timeout(15000)
 
@@ -41,7 +41,9 @@ class ActorLoader extends Actor {
         artists => {
           progressListener ! StartListener(artists.size)
           artists.map {
-            self ! LoadArtist(_)
+            artist => {
+              context.parent ! LoadArtist(artist)
+            }
           }
         }
       }
@@ -61,12 +63,16 @@ class ActorLoader extends Actor {
         artistDetailBuilder += "similarities" -> similarities
         artistDetailBuilder += "mbtags" -> tags
         artistDetailBuilder += "terms" -> terms
-        artistDetailBuilder.result()
+        artistDetailBuilder
       }
 
       val artistForMongo = artistDetails.map {
         artistDetails => {
-          val artistForMongo = artist.toMongo() ++ artistDetails
+
+          val location = findArtistLocation(artist)
+          artistDetails += "location" -> location
+
+          val artistForMongo = artist.toMongo() ++ artistDetails.result()
           Write(List(artistForMongo), db, MongoCollections.artists)
         }
       }
@@ -75,15 +81,9 @@ class ActorLoader extends Actor {
     }
   }
 
-
-  /*val locationFromTemp = Locations.byArtistName(artist.name)
-
-
-  locationFromTemp.map(location => {
-    location -= ("artistName")
-    artistDetailBuilder += "location" -> location
-  })*/
-
+  def findArtistLocation(artist: ArtistDTO): Option[MongoCollection#T] = {
+    db(MongoCollections.locations.name()).findOne(Locations.byArtistName(artist.name))
+  }
 
   def cleanCollection(): Future[Message] = {
     ask(collectionCleaner, CleanCollection(db, MongoCollections.artists)).mapTo[Message]

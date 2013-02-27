@@ -19,7 +19,7 @@ class FileReaderActor extends Actor {
 
   def parse(fileName: String): List[Array[String]] = {
     val linesIterator = fromFile(new File(additionalFiles, fileName), encoding).getLines()
-
+""
     (for (line <- linesIterator) yield (linesIterator.next().split(sep))).toList
   }
 

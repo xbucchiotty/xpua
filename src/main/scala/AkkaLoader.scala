@@ -15,8 +15,7 @@ object AkkaLoader extends App {
 
     akka{
       event-handlers = ["akka.event.Logging$DefaultLogger"]
-    }
-                                          """)
+    }""")
 
   val system = ActorSystem("LoadingSystem", config)
 
@@ -28,7 +27,7 @@ object AkkaLoader extends App {
   val writer = system.actorOf(Props[MongoWriterActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "mongoWriter")
   val databaseReader = system.actorOf(Props[DatabaseReaderActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "databaseReader")
 
-  val actorLoader = system.actorOf(Props[ActorLoader], "actorLoader")
+  val artistLoader = system.actorOf(Props[ArtistLoader].withRouter(RoundRobinRouter(nrOfInstances = 1)), "artistLoader")
   val fileWorker = system.actorOf(Props[FileWorker].withRouter(RoundRobinRouter(nrOfInstances = 5)), "fileWorker")
 
   val mainWorker = system.actorOf(Props[MainWorker], "mainWorker")

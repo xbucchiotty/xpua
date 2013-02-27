@@ -21,41 +21,41 @@ class FileWorker extends Actor {
 
   def receive = {
     case message: LoadFromFile => {
-      println("Loading %s".format(message.fileName))
 
-      val transformResponseFuture = for {
-        readResponse <- readFile(message)
-        transformResponse <- transformObjectToMongo(readResponse, message)
-      } yield (transformResponse)
+      val bean = for {
+        inputFromFiles <- readFile(message)
+        bean <- transformBeanToMongo(inputFromFiles, message)
+      } yield (bean)
 
-      val collectionCleaningStatusFuture = cleanCollection(message)
+      val operationStatus = for {
+        beanForMongo <- bean
+        cleaningStatus <- cleanCollection(message) if cleaningStatus == CollectionCleaned
+        operationStatus <- writeCollections(beanForMongo, message)
+      } yield (operationStatus)
 
-      val futureOfWrite = for {
-        transformResponse <- transformResponseFuture
-        cleaningStatus <- collectionCleaningStatusFuture if cleaningStatus == CollectionCleaned
-        write <- writeCollections(transformResponse, message)
-      } yield (write)
-
-      Await.result(futureOfWrite pipeTo writer, Duration(15, SECONDS))
+      Await.result(operationStatus, Duration(15, SECONDS))
 
       sender ! Done
     }
-
   }
 
   def writeCollections(transformResponse: Transformed[MongoDBObject], message: LoadFromFile): Future[Message] = {
-    ask(writer, Write(transformResponse.objects, message.db, message.collection)).mapTo[Message]
+    ask(writer, Write(transformResponse.objects, message.db, message.collection))
+      .mapTo[Message]
   }
 
   def cleanCollection(message: LoadFromFile): Future[Message] = {
-    ask(collectionCleaner, CleanCollection(message.db, message.collection)).mapTo[Message]
+    ask(collectionCleaner, CleanCollection(message.db, message.collection))
+      .mapTo[Message]
   }
 
-  def transformObjectToMongo(readResponse: FileLoaded, message: LoadFromFile): Future[Transformed[MongoDBObject]] = {
-    ask(fileTransformer, Transform(readResponse.objects, message.f)).mapTo[Transformed[MongoDBObject]]
+  def transformBeanToMongo(readResponse: FileLoaded, message: LoadFromFile): Future[Transformed[MongoDBObject]] = {
+    ask(fileTransformer, Transform(readResponse.objects, message.f))
+      .mapTo[Transformed[MongoDBObject]]
   }
 
   def readFile(message: LoadFromFile): Future[FileLoaded] = {
-    ask(fileReader, LoadFile(message.fileName)).mapTo[FileLoaded]
+    ask(fileReader, LoadFile(message.fileName))
+      .mapTo[FileLoaded]
   }
 }

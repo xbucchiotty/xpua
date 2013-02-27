@@ -17,15 +17,18 @@ class MainWorker extends Actor {
   import context.dispatcher
 
   private val fileWorker = context.actorFor("akka://LoadingSystem/user/fileWorker")
-  private val actorLoader = context.actorFor("akka://LoadingSystem/user/actorLoader")
+  private val artistLoader = context.actorFor("akka://LoadingSystem/user/artistLoader")
 
   def receive = {
     case Go => {
       val futureFilesResponses = for (fileToBeLoad <- filesToBeLoad)
-      yield (ask(fileWorker, fileToBeLoad).mapTo[Message])
+      yield {
+        println("Loading %s".format(fileToBeLoad.fileName))
+        ask(fileWorker, fileToBeLoad).mapTo[Message]
+      }
 
       Future.sequence(futureFilesResponses).onSuccess {
-        case list if list.forall(_ == Done) => actorLoader ! Go
+        case list if list.forall(_ == Done) => artistLoader ! Go
       }
     }
   }
