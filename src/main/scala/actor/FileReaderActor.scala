@@ -13,13 +13,13 @@ class FileReaderActor extends Actor {
 
   def receive = {
     case LoadFile(fileName) => {
-      sender ! FileLoaded(parse(fileName))
+      val result = parse(fileName)
+      sender ! FileLoaded(result)
     }
   }
 
   def parse(fileName: String): List[Array[String]] = {
     val linesIterator = fromFile(new File(additionalFiles, fileName), encoding).getLines()
-""
     (for (line <- linesIterator) yield (linesIterator.next().split(sep))).toList
   }
 

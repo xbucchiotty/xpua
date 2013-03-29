@@ -2,21 +2,21 @@ package actor
 
 import akka.actor.Actor
 import com.mongodb.casbah.Imports._
-import util.MongoCollection
+import util.Configuration
 
 class MongoWriterActor extends Actor {
 
+  private lazy val db = Configuration.db
+
   def receive = {
-    case Write(objects, db, collection) => {
-      write(objects, db, collection)
+    case Write(objects, collection) => {
+      val coll = db(collection.name())
+      objects.map(obj => {
+        coll += obj
+      })
       sender ! Done
     }
   }
 
-  def write[T](objects: List[MongoDBObject], db: MongoDB, collection: MongoCollection) {
-    objects.map(obj => {
-      db(collection.name()) += obj
-    })
-  }
 }
 

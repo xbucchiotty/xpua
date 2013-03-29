@@ -7,7 +7,7 @@ import com.typesafe.config.ConfigFactory
 object AkkaLoader extends App {
 
   val config = ConfigFactory.parseString( """
-    akka.loglevel = DEBUG
+    akka.loglevel = INFO
       akka.actor.debug {
         receive = on
          lifecycle = on
@@ -21,17 +21,18 @@ object AkkaLoader extends App {
 
   val progressListener = system.actorOf(Props[ProgressListenerActor], name = "progressListener")
 
-  val fileReader = system.actorOf(Props[FileReaderActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "fileReader")
-  val fileTransformer = system.actorOf(Props[TransformerActor].withRouter(RoundRobinRouter(nrOfInstances = 5)), name = "fileTransformer")
-  val collectionCleaner = system.actorOf(Props[CollectionCleanerActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "collectionCleaner")
-  val writer = system.actorOf(Props[MongoWriterActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "mongoWriter")
-  val databaseReader = system.actorOf(Props[DatabaseReaderActor].withRouter(SmallestMailboxRouter(nrOfInstances = 2)), name = "databaseReader")
+  val fileReader = system.actorOf(Props[FileReaderActor], name = "fileReader")
+  val collectionCleaner = system.actorOf(Props[CollectionCleanerActor].withRouter(SmallestMailboxRouter(nrOfInstances = 1)), name = "collectionCleaner")
+  val writer = system.actorOf(Props[MongoWriterActor].withRouter(SmallestMailboxRouter(nrOfInstances = 1)), name = "mongoWriter")
+
+  val songReader = system.actorOf(Props(DatabaseReaderActor("subset_track_metadata.db")), name = "songReader")
+  val termOrTagReader = system.actorOf(Props(DatabaseReaderActor("subset_artist_term.db")), name = "termOrTagReader")
+  val similaritiesReader = system.actorOf(Props(DatabaseReaderActor("subset_artist_similarity.db")), name = "similaritiesReader")
 
   val artistLoader = system.actorOf(Props[ArtistLoader].withRouter(RoundRobinRouter(nrOfInstances = 1)), "artistLoader")
-  val fileWorker = system.actorOf(Props[FileWorker].withRouter(RoundRobinRouter(nrOfInstances = 5)), "fileWorker")
 
-  val mainWorker = system.actorOf(Props[MainWorker], "mainWorker")
+  val preloader = system.actorOf(Props[PreloaderActor], "preloader")
 
-  mainWorker ! Go
+  preloader ! Go
 }
 

@@ -1,23 +1,54 @@
 package actor
 
-import slick.session.Database
+import scala.slick.driver.SQLiteDriver.simple._
 import util.Configuration
 import akka.actor.Actor
 
-class DatabaseReaderActor extends Actor {
+case class DatabaseReaderActor(databaseName: String) extends Actor {
 
   private lazy val additionalFiles = Configuration.additionalFiles
 
   val driver = "org.sqlite.JDBC"
 
-  def receive = {
-    case Extract(databaseName, f) => {
-      val database = Database.forURL(databaseUrl(databaseName), driver = driver)
-      val session = database.createSession()
+  private lazy val database = Database.forURL(databaseUrl(databaseName), driver = driver)
 
-      sender ! Extracted(f(session))
+  private var session: Session = null
 
+  override def preStart() {
+    super.preStart()
+    session = database.createSession()
+  }
+
+  override def postStop() {
+    super.postStop()
+    if (session != null) {
       session.close()
+    }
+  }
+
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    super.preRestart(reason, message)
+    if (session != null) {
+      session.close()
+    }
+
+  }
+
+  override def postRestart(reason: Throwable) {
+    super.postRestart(reason)
+    session = database.createSession()
+  }
+
+  def receive = {
+    case Extract(f) => {
+
+      database.withTransaction {
+        session:Session => {
+          val result = f(session)
+
+          sender ! Extracted(result)
+        }
+      }
     }
   }
 

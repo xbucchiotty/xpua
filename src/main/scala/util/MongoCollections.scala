@@ -15,6 +15,14 @@ object MongoCollections {
     def name() = "terms"
   }
 
+  val songs = new MongoCollection {
+    def name() = "songs"
+  }
+
+  val similaritites = new MongoCollection {
+    def name() = "similaritites"
+  }
+
   val locations = new MongoCollection {
     def name() = "locations"
   }

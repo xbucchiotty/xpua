@@ -3,7 +3,8 @@
 
 Vagrant::Config.run do |config|
     config.vm.define :dev do |config|
-        config.vm.box="lucid32-fr"
+        config.vm.box="precise32"
+        config.vm.box_url="http://files.vagrantup.com/precise32.box"
         config.vm.host_name="base"
         config.vm.network :hostonly, "192.168.56.201"
         config.vm.forward_port 27017, 27017

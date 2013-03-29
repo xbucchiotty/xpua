@@ -18,7 +18,7 @@ case class Song(trackId: String,
 }
 
 object Song {
-  implicit def toMongo(song: Song): DBObject = {
+  def toMongo(song: Song):MongoDBObject = {
     MongoDBObject("trackId" -> song.trackId,
       "title" -> song.title,
       "songId" -> song.songId,
@@ -31,6 +31,10 @@ object Song {
       "artistHotttnesss" -> song.artistHotttnesss,
       "year" -> song.year)
 
+  }
+
+  def byArtistName(artistName: String): MongoDBObject = {
+    MongoDBObject("artistName" -> artistName)
   }
 }
 
