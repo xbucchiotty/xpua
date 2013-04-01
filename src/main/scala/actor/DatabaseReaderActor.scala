@@ -3,19 +3,26 @@ package actor
 import scala.slick.driver.SQLiteDriver.simple._
 import util.Configuration
 import akka.actor.Actor
+import java.io.File
 
 case class DatabaseReaderActor(databaseName: String) extends Actor {
 
-  private lazy val additionalFiles = Configuration.additionalFiles
-
   val driver = "org.sqlite.JDBC"
 
-  private lazy val database = Database.forURL(databaseUrl(databaseName), driver = driver)
-
   private var session: Session = null
+  private var database: Database = null
 
   override def preStart() {
     super.preStart()
+
+    val additionalFiles = Configuration.additionalFiles
+    val directory = new File(getClass.getClassLoader.getResource(additionalFiles).toURI)
+
+    if (!directory.isDirectory) {
+      throw new IllegalStateException(s"$additionalFiles path must exists")
+    }
+
+    database = Database.forURL(databaseUrl(directory, databaseName), driver = driver)
     session = database.createSession()
   }
 
@@ -43,7 +50,7 @@ case class DatabaseReaderActor(databaseName: String) extends Actor {
     case Extract(f) => {
 
       database.withTransaction {
-        session:Session => {
+        session: Session => {
           val result = f(session)
 
           sender ! Extracted(result)
@@ -52,7 +59,7 @@ case class DatabaseReaderActor(databaseName: String) extends Actor {
     }
   }
 
-  def databaseUrl(databaseName: String): String = {
-    "jdbc:sqlite://%s/%s".format(additionalFiles, databaseName)
+  def databaseUrl(directory: File, databaseName: String): String = {
+    "jdbc:sqlite://%s/%s".format(directory.getAbsolutePath, databaseName)
   }
 }

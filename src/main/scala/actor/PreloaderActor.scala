@@ -1,123 +1,108 @@
 package actor
 
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
 import akka.pattern.ask
 import akka.util.Timeout
 
 import com.mongodb.casbah.Imports._
 import scala.concurrent.Future
 
-import util.{MongoCollections, Configuration}
 import base._
 import scala.slick.driver.SQLiteDriver.simple._
-import file.Locations
+import file.Location
 
 
 class PreloaderActor extends Actor {
 
-  implicit val timeout = Timeout(60000)
+  implicit val timeout = Timeout(120000)
 
   import context.dispatcher
 
   private val artistLoader = context.actorFor("akka://LoadingSystem/user/artistLoader")
-  private val writer = context.actorFor("akka://LoadingSystem/user/mongoWriter")
   private val fileReader = context.actorFor("akka://LoadingSystem/user/fileReader")
-  private val collectionCleaner = context.actorFor("akka://LoadingSystem/user/collectionCleaner")
 
   private val songReader = context.actorFor("akka://LoadingSystem/user/songReader")
   private val termOrTagReader = context.actorFor("akka://LoadingSystem/user/termOrTagReader")
   private val similaritiesReader = context.actorFor("akka://LoadingSystem/user/similaritiesReader")
 
+  private val locationsCollection = context.actorFor("akka://LoadingSystem/user/locations")
+  private val similarititesCollection = context.actorFor("akka://LoadingSystem/user/similaritites")
+  private val songsCollection = context.actorFor("akka://LoadingSystem/user/songs")
+  private val tagsCollection = context.actorFor("akka://LoadingSystem/user/tags")
+  private val termsCollection = context.actorFor("akka://LoadingSystem/user/terms")
+
+  private val progressListener = context.actorFor("akka://LoadingSystem/user/progressListener")
+
   def receive = {
     case Go => {
+
+      progressListener ! StartListener(5)
+
+      val locations: Future[Message] = loadLocations()
+
       for {
-        locations <- loadLocations()
-        songs <- loadSongs()
-        similarities <- loadSimilarities()
-        tags <- loadTags()
-        terms <- loadTerms()
+        _ <- loadSongs()
+        _ <- loadSimilarities()
+        _ <- loadTags()
+        _ <- loadTerms()
+        _ <- locations
       }
-      yield (artistLoader ! Go)
+      yield (artistLoader.tell(Go, sender = self))
     }
   }
 
   def loadLocations(): Future[Message] = {
-    for {
-      _ <- ask(collectionCleaner, Clean(MongoCollections.locations))
-      fileLoaded <- ask(fileReader, LoadFile("subset_artist_location.txt")).mapTo[FileLoaded]
-      objs <- toMongo(fileLoaded)
-      result <- ask(writer, Write(objs, MongoCollections.locations)).mapTo[Message] if result == Done
-    } yield (result)
-  }
+    val locations = ask(fileReader, LoadFile("subset_artist_location.txt"))
+      .mapTo[FileLoaded]
+      .map(fileLoaded => fileLoaded.lines.map(Location.apply(_)))
 
-  def toMongo(fileLoaded: FileLoaded): Future[List[MongoDBObject]] = {
-    Future.successful(fileLoaded.lines.map(Locations.fromFile(_)))
+    ProgressListener("locations", progressListener)(for {
+      beans <- locations
+      status <- ask(locationsCollection, Write(beans)).mapTo[Message]
+    } yield (status))
   }
 
   private def loadSongs(): Future[Message] = {
-    def all(): (Session) => List[MongoDBObject] = {
+    load("songs", songReader, songsCollection) {
       implicit session => {
         val query = for (song <- Songs) yield (song)
-        query.mapResult(Song.toMongo(_)).list()
+        query.mapResult(_.toMongo).list()
       }
     }
-
-    for {
-      clean <- ask(collectionCleaner, Clean(MongoCollections.songs))
-      terms <- ask(songReader, Extract(all())).mapTo[Extracted[List[MongoDBObject]]]
-      status <- ask(writer, Write(terms.data, MongoCollections.songs)).mapTo[Message]
-    }
-    yield (status)
   }
 
   private def loadSimilarities(): Future[Message] = {
-    def all(): (Session) => List[MongoDBObject] = {
+    load("similarities", similaritiesReader, similarititesCollection) {
       implicit session => {
         val query = for (artist <- ArtistSimilarities) yield (artist)
-        query.mapResult(ArtistSimilarity.toMongo(_)).list()
+        query.mapResult(_.toMongo).list()
       }
     }
-
-    for {
-      clean <- ask(collectionCleaner, Clean(MongoCollections.similaritites))
-      similarities <- ask(similaritiesReader, Extract(all())).mapTo[Extracted[List[MongoDBObject]]]
-      status <- ask(writer, Write(similarities.data, MongoCollections.similaritites)).mapTo[Message]
-    }
-    yield (status)
   }
 
   private def loadTags(): Future[Message] = {
-    def all(): (Session) => List[MongoDBObject] = {
+    load("tags", termOrTagReader, tagsCollection) {
       implicit session => {
         val query = for (tagByArtist <- TagsByArtist) yield (tagByArtist)
-        query.mapResult(TagByArtist.toMongo(_)).list()
+        query.mapResult(_.toMongo).list()
       }
     }
-
-    for {
-      clean <- ask(collectionCleaner, Clean(MongoCollections.tags))
-      tags <- ask(termOrTagReader, Extract(all())).mapTo[Extracted[List[MongoDBObject]]]
-      status <- ask(writer, Write(tags.data, MongoCollections.tags)).mapTo[Message]
-    }
-    yield (status)
   }
 
   private def loadTerms(): Future[Message] = {
-    def all: (Session) => List[MongoDBObject] = {
+    load("terms", termOrTagReader, termsCollection) {
       implicit session => {
         val query = for (temByArtist <- TermsByArtist) yield (temByArtist)
-        query.mapResult(TermByArtist.toMongo(_)).list()
+        query.mapResult(_.toMongo).list()
       }
     }
-
-    for {
-      clean <- ask(collectionCleaner, Clean(MongoCollections.terms))
-      terms <- ask(termOrTagReader, Extract(all)).mapTo[Extracted[List[MongoDBObject]]]
-      status <- ask(writer, Write(terms.data, MongoCollections.terms)).mapTo[Message]
-    }
-    yield (status)
-
   }
 
-
+  private def load(message: String, reader: ActorRef, writer: ActorRef)(all: (Session) => List[MongoDBObject]): Future[Message] = {
+    ProgressListener(message, progressListener)(for {
+      beans <- ask(reader, Extract(all)).mapTo[Extracted[List[MongoDBObject]]]
+      status <- ask(writer, Write(beans.data)).mapTo[Message]
+    }
+    yield (status))
+  }
 }

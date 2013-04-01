@@ -2,6 +2,7 @@ package base
 
 import scala.slick.driver.SQLiteDriver.simple._
 import com.mongodb.casbah.Imports._
+import actor.MongoCollectionActor
 
 
 case class Song(trackId: String,
@@ -15,24 +16,24 @@ case class Song(trackId: String,
                 artistFamiliarity: Double,
                 artistHotttnesss: Double,
                 year: Int) {
+
+  def toMongo: MongoDBObject = {
+    MongoDBObject("trackId" -> trackId,
+      "title" -> title,
+      "songId" -> songId,
+      "release" -> release,
+      "artistId" -> artistId,
+      "artistMbid" -> artistMbid,
+      "artistName" -> artistName,
+      "duration" -> duration,
+      "artistFamiliarity" -> artistFamiliarity,
+      "artistHotttnesss" -> artistHotttnesss,
+      "year" -> year)
+
+  }
 }
 
 object Song {
-  def toMongo(song: Song):MongoDBObject = {
-    MongoDBObject("trackId" -> song.trackId,
-      "title" -> song.title,
-      "songId" -> song.songId,
-      "release" -> song.release,
-      "artistId" -> song.artistId,
-      "artistMbid" -> song.artistMbid,
-      "artistName" -> song.artistName,
-      "duration" -> song.duration,
-      "artistFamiliarity" -> song.artistFamiliarity,
-      "artistHotttnesss" -> song.artistHotttnesss,
-      "year" -> song.year)
-
-  }
-
   def byArtistName(artistName: String): MongoDBObject = {
     MongoDBObject("artistName" -> artistName)
   }
@@ -62,4 +63,12 @@ object Songs extends Table[Song]("songs") {
   def year = column[Int]("year")
 
   def * = trackId ~ title ~ songId ~ release ~ artistId ~ artistMbid ~ artistName ~ duration ~ artistFamiliarity ~ artistHotttnesss ~ year <>(Song.apply _, Song.unapply _)
+}
+
+class SongsCollection extends MongoCollectionActor {
+  val name = "songs"
+
+  def indexCollection() {
+    coll.ensureIndex("artistName")
+  }
 }

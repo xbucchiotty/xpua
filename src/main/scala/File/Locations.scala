@@ -1,11 +1,12 @@
 package file
 
 import com.mongodb.casbah.Imports._
+import actor.MongoCollectionActor
 
 
-object Locations {
+object Location {
 
-  def fromFile: (Array[String]) => MongoDBObject = {
+  def apply: (Array[String]) => MongoDBObject = {
     line => {
       MongoDBObject("locationId" -> line(3),
         "artistName" -> line(4),
@@ -19,3 +20,11 @@ object Locations {
   }
 }
 
+
+class LocationsCollection extends MongoCollectionActor {
+  protected val name = "locations"
+
+  def indexCollection() {
+    coll.ensureIndex("artistName")
+  }
+}
