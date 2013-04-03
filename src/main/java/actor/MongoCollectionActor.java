@@ -34,10 +34,10 @@ public abstract class MongoCollectionActor<T> extends UntypedActor {
     private void tryFind(Object message) {
         if (message instanceof Find) {
             Find<T> find = (Find) message;
-            getSender().tell(collection.find(find.query).as(find.clazz));
+            getSender().tell(collection.find(find.query, find.args).as(find.clazz));
         } else if (message instanceof FindOne) {
             FindOne<T> findOne = (FindOne<T>) message;
-            getSender().tell(collection.findOne(findOne.query).as(findOne.clazz));
+            getSender().tell(collection.findOne(findOne.query, findOne.args).as(findOne.clazz));
         } else {
             unhandled(message);
         }

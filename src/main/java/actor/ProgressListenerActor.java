@@ -45,7 +45,7 @@ public class ProgressListenerActor extends UntypedActor {
     private void printStatus(String message) {
         if (totalCount() % scale() == 0 || totalCount().equals(objective)) {
             System.out.println(String.format("Progression: %3.0f%% %5d/%-5d in %5d(ms) Success: %5d, Error:%5d.\t[%-40s]",
-                    totalCount() / objective * 100d,
+                    (double)totalCount() / objective * 100d,
                     totalCount(),
                     objective,
                     System.currentTimeMillis() - startTime,

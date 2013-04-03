@@ -42,7 +42,7 @@ public class ArtistLoaderActor extends UntypedActor {
                     progressListener.tell(new StartListener(sources.size()));
 
                     for (String[] source : sources) {
-                        artistWriter.tell(new LoadArtist(source), progressListener);
+                        artistWriter.tell(new LoadArtist(source));
                     }
 
                     return null;

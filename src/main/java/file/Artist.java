@@ -1,6 +1,10 @@
 package file;
 
+import base.ArtistSimilarity;
+import base.Song;
 import org.jongo.marshall.jackson.oid.ObjectId;
+
+import java.util.Collection;
 
 public class Artist {
 
@@ -11,6 +15,12 @@ public class Artist {
     private String mbid;
     private String trackId;
     private String name;
+
+    private Location location;
+    private Collection<Song> songs;
+    private Collection<String> similars;
+    private Collection<String> terms;
+    private Collection<String> tags;
 
     public Artist() {
     }
@@ -62,6 +72,45 @@ public class Artist {
         this.name = name;
     }
 
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public Collection<Song> getSongs() {
+        return songs;
+    }
+
+    public void setSongs(Collection<Song> songs) {
+        this.songs = songs;
+    }
+
+    public Collection<String> getSimilars() {
+        return similars;
+    }
+
+    public void setSimilars(Collection<String> similars) {
+        this.similars = similars;
+    }
+
+    public Collection<String> getTerms() {
+        return terms;
+    }
+
+    public void setTerms(Collection<String> terms) {
+        this.terms = terms;
+    }
+
+    public Collection<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Collection<String> tags) {
+        this.tags = tags;
+    }
 
     public static Artist toArtist(String[] source) {
         return new Artist(source[0], source[1], source[2], source[3]);
