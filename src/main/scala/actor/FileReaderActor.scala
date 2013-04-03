@@ -13,6 +13,10 @@ class FileReaderActor extends Actor {
   private var directory: File = null
 
 
+  def receive = {
+    //TODO: IMPLEMENTS ME : each lines is a list of tokenized string with separator <SEP>
+  }
+
   override def preStart() {
     directory = new File(getClass.getClassLoader.getResource(additionalFiles).toURI)
 
@@ -21,17 +25,6 @@ class FileReaderActor extends Actor {
     }
   }
 
-  def receive = {
-    case LoadFile(fileName) => {
-      val result = parse(fileName)
-      sender ! FileLoaded(result)
-    }
-  }
-
-  def parse(fileName: String): List[Array[String]] = {
-    val linesIterator = fromFile(new File(directory, fileName), encoding).getLines()
-    (for (line <- linesIterator) yield (linesIterator.next().split(sep))).toList
-  }
 
 }
 

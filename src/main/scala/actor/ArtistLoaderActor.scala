@@ -11,27 +11,20 @@ class ArtistLoaderActor extends Actor {
   implicit val timeout = Timeout(10000)
   private val readFileTimeout = 30000
 
-  import context.dispatcher
-
-  private val fileReader = context.actorFor("akka://LoadingSystem/user/fileReader")
-  private val artistWriter = context.actorFor("akka://LoadingSystem/user/artistWriter")
-
-  private val progressListener = context.actorFor("akka://LoadingSystem/user/progressListener")
+  //import context.dispatcher
 
   def receive = {
-    case Go => {
-      val artists: Future[List[Array[String]]] = for {
-        artists <- ask(fileReader, LoadFile("subset_unique_artists.txt"))(Timeout(readFileTimeout))
-          .mapTo[FileLoaded]
-          .map(_.lines)
-      } yield (artists)
+    //TODO IMPLEMENTS ME: LOAD THE FILE
+    ////TODO IMPLEMENTS ME: INITIALIZE THE PROGRESS LISTENER
+    //LOAD LOCATIONS AND THEN SIMILARITIES,TERMS,TAGS ON AFTER EACH OTHER BECAUSE IT'S AN SQLLITE DRIVER
+    //WHEN EVERYTHING IS DONE ASK ANOTHER ACTOR TO LOAD ARTISTS ?
 
-      artists.map(artists => {
-        progressListener ! StartListener(artists.size)
-        artists.map(artist => {
-          artistWriter.tell(LoadArtist(artist), sender = progressListener)
-        })
-      })
-    }
+    /*
+    artist =>  "subset_unique_artists.txt"
+    location => "subset_artist_location.txt"
+     songs => "subset_track_metadata.db"
+     terms or tags => "subset_artist_term.db"
+     similarities => "subset_artist_similarity.db"
+     */
   }
 }

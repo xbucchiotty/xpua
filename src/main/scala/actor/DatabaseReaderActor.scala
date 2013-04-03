@@ -12,6 +12,10 @@ case class DatabaseReaderActor(databaseName: String) extends Actor {
   private var session: Session = null
   private var database: Database = null
 
+  def receive = {
+    //IMPLEMENTS JDBC QUERIES
+  }
+
   override def preStart() {
     super.preStart()
 
@@ -44,19 +48,6 @@ case class DatabaseReaderActor(databaseName: String) extends Actor {
   override def postRestart(reason: Throwable) {
     super.postRestart(reason)
     session = database.createSession()
-  }
-
-  def receive = {
-    case Extract(f) => {
-
-      database.withTransaction {
-        session: Session => {
-          val result = f(session)
-
-          sender ! Extracted(result)
-        }
-      }
-    }
   }
 
   def databaseUrl(directory: File, databaseName: String): String = {

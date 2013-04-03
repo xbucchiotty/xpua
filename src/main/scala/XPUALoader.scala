@@ -24,22 +24,5 @@ object XPUALoader extends App {
 
   system.actorOf(Props[ProgressListenerActor], name = "progressListener")
 
-  system.actorOf(Props[FileReaderActor], name = "fileReader")
-  system.actorOf(Props(DatabaseReaderActor("subset_track_metadata.db")), name = "songReader")
-  system.actorOf(Props(DatabaseReaderActor("subset_artist_term.db")), name = "termOrTagReader")
-  system.actorOf(Props(DatabaseReaderActor("subset_artist_similarity.db")), name = "similaritiesReader")
-
-  system.actorOf(Props[ArtistsCollection], name = "artists")
-  system.actorOf(Props[LocationsCollection], name = "locations")
-  system.actorOf(Props[ArtistSimilaritiesCollection], name = "similaritites")
-  system.actorOf(Props[SongsCollection], name = "songs")
-  system.actorOf(Props[TagsByArtistCollection], name = "tags")
-  system.actorOf(Props[TermsByArtistCollection], name = "terms")
-
-  system.actorOf(Props[ArtistWriterActor], "artistWriter")
-  system.actorOf(Props[ArtistLoaderActor], "artistLoader")
-  val preloader = system.actorOf(Props[PreloaderActor], "preloader")
-
-  preloader ! Go
 }
 
