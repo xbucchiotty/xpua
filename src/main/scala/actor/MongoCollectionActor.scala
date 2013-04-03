@@ -18,7 +18,7 @@ trait MongoCollectionActor extends Actor {
 
   def receive = {
     case Write(objects: List[MongoDBObject]) => {
-      coll.insert(objects: _*)
+      objects.map(obj => coll += obj)
       sender tell(Done(s"$name"), self)
     }
 
@@ -38,6 +38,7 @@ trait MongoCollectionActor extends Actor {
     println(s"Preparing collection $name")
 
     coll.drop()
+    coll.dropIndexes()
 
     indexCollection()
   }

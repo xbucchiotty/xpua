@@ -25,6 +25,5 @@ class LocationsCollection extends MongoCollectionActor {
   protected val name = "locations"
 
   def indexCollection() {
-    coll.ensureIndex("artistName")
   }
 }
