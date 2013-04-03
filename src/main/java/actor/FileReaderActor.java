@@ -24,25 +24,9 @@ public class FileReaderActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if (message instanceof LoadFile) {
-            getSender().tell(parse(((LoadFile) message).fileName));
-        } else {
-            unhandled(message);
-        }
+        //TODO: IMPLEMENTS ME : each lines is a list of tokenized string with separator <SEP>
     }
 
-    private List<String[]> parse(String fileName) throws IOException {
-        File file = new File(directory, fileName);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-
-        List<String[]> lines = newArrayList();
-        while (bufferedReader.ready()) {
-            lines.add(toArray(on(SEPARATOR).split(bufferedReader.readLine()), String.class));
-        }
-
-        return lines;
-
-    }
 
     @Override
     public void preStart() {
@@ -55,21 +39,5 @@ public class FileReaderActor extends UntypedActor {
             throw new IllegalStateException(String.format("%s must exists", path));
         }
     }
-
-    /*
-
-
-  def receive = {
-    case LoadFile(fileName) => {
-      val result = parse(fileName)
-      sender ! FileLoaded(result)
-    }
-  }
-
-  def parse(fileName: String): List[Array[String]] = {
-    val linesIterator = fromFile(new File(directory, fileName), encoding).getLines()
-    (for (line <- linesIterator) yield (linesIterator.next().split(sep))).toList
-  }
-     */
 
 }

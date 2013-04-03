@@ -1,7 +1,5 @@
 package actor;
 
-import actor.message.Extract;
-import actor.message.Extracted;
 import akka.actor.UntypedActor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
@@ -28,6 +26,11 @@ public class DatabaseReaderActor extends UntypedActor {
     }
 
     @Override
+    public void onReceive(Object message) throws Exception {
+        //TODO: IMPLEMENTS JDBC QUERIES
+    }
+
+    @Override
     public void preStart() {
         String path = Configuration.additionalFiles;
         try {
@@ -50,16 +53,6 @@ public class DatabaseReaderActor extends UntypedActor {
             throw new IllegalStateException(e);
         }
 
-    }
-
-    @Override
-    public void onReceive(Object message) throws Exception {
-        if (message instanceof Extract) {
-            Extract request = (Extract) message;
-            getSender().tell(new Extracted(template.query(request.sqlQuery, request.rowMapper)));
-        } else {
-            unhandled(message);
-        }
     }
 
 

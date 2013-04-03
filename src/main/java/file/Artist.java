@@ -1,6 +1,5 @@
 package file;
 
-import base.ArtistSimilarity;
 import base.Song;
 import org.jongo.marshall.jackson.oid.ObjectId;
 
